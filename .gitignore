@@ -1,0 +1,7 @@
+*.class
+# ignore all subdirectories: 
+**/
+*.swp
+*.swo
+.class
+.pdf
