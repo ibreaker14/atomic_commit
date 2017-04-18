@@ -6,11 +6,25 @@ import java.math.BigInteger;
 import java.security.*;
 import java.nio.file.*;
 
+/*****************************//**
+* \brief This is the User Interface for Chord P2P files
+* It allows users to start Nodes and connect to othere 
+* \author Mingtau Li, 011110539
+* \author Kevin Duong, 011715000
+* \author Mark Spencer Tan, 012192282
+**********************************/
+//**/
+
+
+/*****************************//**
+* \class ChordUser class "Chorduser.java" 
+* \brief It implements ChordUser Interface
+**********************************/ 
 
 public class ChordUser
 {
-     int port;
-     static Chord    chord;
+    int port;
+    static Chord chord;
 
     
     private long md5(String objectName)
@@ -40,12 +54,9 @@ public class ChordUser
             @Override
              public void run() {
                      long guid = md5("" + port);
-                 
-                 
                      try{
                         chord = new Chord(port, guid);
-                         
-                         Files.createDirectories(Paths.get(guid+"/repository"));
+                        Files.createDirectories(Paths.get(guid+"/repository"));
                      }
                      catch(IOException e)
                      {
@@ -53,7 +64,7 @@ public class ChordUser
                          
                      }
                      System.out.println("Usage: \n\tjoin <ip> <port>\n\twrite <file> (the file must be an integer stored in the working directory, i.e, ./"+guid+"/file");
-                     System.out.println("\tread <file>\n\tdelete <file>\n\tprint");
+                     System.out.println("\tread <file>\n\tdelete <file>\n\tprint\n\tleave");
         
                      Scanner scan= new Scanner(System.in);
                      String delims = "[ ]+";
@@ -121,6 +132,16 @@ public class ChordUser
                             {
                                 System.out.println(e);
                             }
+                        }
+
+                        // Leaves the ring and passes all files to nearest chord
+                        if (tokens[0].equals("leave") && tokens.length == 1){
+                            try {
+                                chord.leaveRing();
+                            } catch (NotBoundException e) {
+                                e.printStackTrace();
+                            }
+                            System.exit(0);
                         }
                      }
                 }
