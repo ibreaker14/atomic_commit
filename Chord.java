@@ -1,3 +1,6 @@
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.rmi.*;
 import java.rmi.registry.*;
 import java.rmi.server.*;
@@ -16,6 +19,19 @@ public class Chord extends java.rmi.server.UnicastRemoteObject implements ChordM
     ChordMessageInterface[] finger;
     int nextFinger;
     long guid;   		// GUID (i)
+    Timer timer;
+
+
+    public ChordMessageInterface rmiChord(String ip, int port) {
+        ChordMessageInterface chord = null;
+        try{
+            Registry registry = LocateRegistry.getRegistry(ip, port);
+            chord = (ChordMessageInterface)(registry.lookup("Chord"));
+        } catch (RemoteException | NotBoundException e){
+            e.printStackTrace();
+        }
+        return chord;
+    }
     
     
     public Boolean isKeyInSemiCloseInterval(long key, long key1, long key2)
@@ -76,6 +92,15 @@ public class Chord extends java.rmi.server.UnicastRemoteObject implements ChordM
     public boolean isAlive() throws RemoteException {
 	    return true;
     }
+
+
+    public void setSuccessor(ChordMessageInterface successor) throws RemoteException{
+        this.successor = successor;
+    }
+ 
+    public void setPredecessor(ChordMessageInterface predecessor) throws RemoteException{
+        this.predecessor = predecessor;
+    }
     
     public ChordMessageInterface getPredecessor() throws RemoteException {
 	    return predecessor;
@@ -98,9 +123,16 @@ public class Chord extends java.rmi.server.UnicastRemoteObject implements ChordM
     }
     
     public ChordMessageInterface closestPrecedingNode(long key) throws RemoteException {
-	// todo
+      //M is number of nodes. iterate thorugh it number of nodes -1 times
+        //so u dont hit urself
+        for(int x = 0; x <= M-1;x++) {
+          if(finger[x] != null) {
+            if(isKeyInSemiCloseInterval(key, this.getId(), finger[x].getId())) {
+              return finger[x];
+            }
+          }
+        }
         return successor;
-
     }
     
     public void joinRing(String ip, int port)  throws RemoteException {
@@ -116,6 +148,26 @@ public class Chord extends java.rmi.server.UnicastRemoteObject implements ChordM
             successor = this;
         }   
     }
+
+
+    public void leaveRing() throws RemoteException, NotBoundException{
+        timer.cancel();
+
+        predecessor.setSuccessor(successor);
+        successor.setPredecessor(predecessor);
+
+        Path path = Paths.get("./" + guid + "/repository");
+        //get nearest chord neighbor that will inherit the file
+
+        //Copy the files to the nearest chord's repo
+        Path neighbor_path = Paths.get("./" + successor.getId() + "/repository");
+
+        copyFolder(path, neighbor_path);
+
+        successor = null;
+        predecessor = null;
+    }
+
     
     public void findingNextSuccessor()
     {
@@ -159,11 +211,35 @@ public class Chord extends java.rmi.server.UnicastRemoteObject implements ChordM
     }
     
     public void notify(ChordMessageInterface j) throws RemoteException {
-         if (predecessor == null || (predecessor != null
-                    && isKeyInOpenInterval(j.getId(), predecessor.getId(), guid)))
-	 // TODO 
-	 //transfer keys not in the range (j,i] to j;
-             predecessor = j;
+        String mRepoPath = "./"+guid+"/repository";
+
+        if (predecessor == null || (predecessor != null
+                    && isKeyInOpenInterval(j.getId(), predecessor.getId(), guid))) {
+
+            //transfer keys in the range [j,i) to j;
+            File src_dir = Paths.get(mRepoPath).toFile();
+            // Array of filenames within the i's repo
+            String files[] = src_dir.list();
+            for (String file : files) {
+                long file_key = Long.parseLong(file);
+                // see if file k is within range of [j,i)
+                if(isKeyInSemiCloseInterval(file_key, j.getId(), this.guid)){
+                    try {
+                        String srcPath = mRepoPath + "/" + file;
+                        //insert file to j if it is
+                        j.put(file_key, new FileStream(srcPath));
+                        //delete key in i
+                        this.delete(file_key);
+                    } catch (IOException e) {
+                        System.out.println("Invalid Folder paths");
+                    } catch (Exception e){
+                        e.printStackTrace();
+                    }
+                }
+            }
+            // set j as predecessor of i
+            predecessor = j;
+        }
     }
     
     public void fixFingers() {
@@ -246,6 +322,23 @@ public class Chord extends java.rmi.server.UnicastRemoteObject implements ChordM
         }
         catch(RemoteException e){
 	       System.out.println("Cannot retrive id");
+        }
+    }
+
+    /*****************************//**
+    * copies contents of folder
+    **********************************/  
+    public static void copyFolder(Path src, Path dest) {
+        File src_dir = src.toFile();
+        String files[] = src_dir.list();
+        for (String file : files) {
+            try {
+                Path srcPath = Paths.get(src + "/" + file);
+                Path destPath = Paths.get(dest + "/" + file);
+                Files.copy(srcPath, destPath);
+            } catch (IOException e) {
+                System.out.println("Invalid Folder paths");
+            }
         }
     }
 }
