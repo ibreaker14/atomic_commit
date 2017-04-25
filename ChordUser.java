@@ -1,5 +1,4 @@
 import java.rmi.*;
-import java.net.*;
 import java.util.*;
 import java.io.*;
 import java.math.BigInteger;
@@ -20,13 +19,11 @@ import java.nio.file.*;
 * \class ChordUser class "Chorduser.java" 
 * \brief It implements ChordUser Interface
 **********************************/ 
-
 public class ChordUser
 {
-    int port;
-    static Chord chord;
+     int port;
 
-    
+    /** Creates an md5 hashed key for the guid **/
     private long md5(String objectName)
     {
         try
@@ -45,7 +42,10 @@ public class ChordUser
         return 0;
     }
     
-    
+    /*****************************//**
+    * Starts Constuctor
+    * \param p node port
+    **********************************/  
      public ChordUser(int p) {
          port = p;
         
@@ -53,104 +53,111 @@ public class ChordUser
          timer1.scheduleAtFixedRate(new TimerTask() {
             @Override
              public void run() {
-             long guid = md5("" + port);
-             try{
-                chord = new Chord(port, guid);
-                Files.createDirectories(Paths.get(guid+"/repository"));
-             }
-             catch(IOException e)
-             {
-                 e.printStackTrace();
-
-             }
-             System.out.println("Usage: \n\tjoin <ip> <port>\n\twrite <file> (the file must be an integer stored in the working directory, i.e, ./"+guid+"/file");
-             System.out.println("\tread <file>\n\tdelete <file>\n\tprint\n\tleave");
-
-             Scanner scan= new Scanner(System.in);
-             String delims = "[ ]+";
-             String command = "";
-             while (true)
-             {
-                 String text= scan.nextLine();
-                 String[] tokens = text.split(delims);
-                 if (tokens[0].equals("join") && tokens.length == 3) {
-                     try {
-                         int portToConnect = Integer.parseInt(tokens[2]);
-
-                         chord.joinRing(tokens[1], portToConnect);
-                     } catch (IOException e) {
+                 try {
+                     long guid = md5("" + port);
+                     Chord chord = new Chord(port, guid);
+                     try{
+                         Files.createDirectories(Paths.get(guid+"/repository"));
+                     }
+                     catch(IOException e)
+                     {
                          e.printStackTrace();
+                         
+                     }
+                     System.out.println("Usage: \n\tjoin <ip> <port>\n\twrite <file> (the file must be an integer stored in the working directory, i.e, ./"+guid+"/file");
+                     System.out.println("\tread <file>\n\tdelete <file>\n\tprint\n\tleave");
+        
+                     Scanner scan= new Scanner(System.in);
+                     String delims = "[ ]+";
+                     String command = "";
+                     while (true)
+                     {
+                         String text= scan.nextLine();
+                         String[] tokens = text.split(delims);
+                         if (tokens[0].equals("join") && tokens.length == 3) {
+                             try {
+                                 int portToConnect = Integer.parseInt(tokens[2]);
+                                 
+                                 chord.joinRing(tokens[1], portToConnect);
+                             } catch (IOException e) {
+                                 e.printStackTrace();
+                             }
+                         }
+                         if (tokens[0].equals("print")) {
+                             chord.Print();
+                         }
+                         if  (tokens[0].equals("write") && tokens.length == 2) {
+                             try {
+                                 String path;
+                                 String fileName = tokens[1];
+                                 long guidObject = md5(fileName);
+                                 // If you are using windows you have to use
+                                 // path = ".\\"+  guid +"\\"+fileName; // path to file
+                                 path = "./"+  guid +"/"+fileName; // path to file
+                                 FileStream file = new FileStream(path);
+                                 ChordMessageInterface peer = chord.locateSuccessor(guidObject);
+                                 peer.put(guidObject, file); // put file into ring
+                             } catch (IOException e) {
+                                 e.printStackTrace();
+                             } catch (Exception e){
+                                 System.out.println("File not found");
+                             }
+                         }
+                         // Downloads a file from a chord to the local filesystem
+                         if  (tokens[0].equals("read") && tokens.length == 2) {
+                             try {
+                                 String filename = tokens[1];
+                                 Path path = Paths.get("./" + guid + "/" + filename);
+                                 long guidObject = md5(filename);
+                                 // get a chord that is responsible for the file
+                                 ChordMessageInterface peer = chord.locateSuccessor(guidObject);
+                                 // open a stream to copy content to stream
+                                 InputStream stream = peer.get(guidObject);
+                                 // Outputs stream content to a file
+                                 Files.copy(stream, path);
+                             }catch(IOException e){
+                                 e.printStackTrace();
+                             }
+                        }
+                        // Deletes a file stored from a Chord
+                        if  (tokens[0].equals("delete") && tokens.length == 2) {
+                            try {
+                                String filename = tokens[1];
+                                long guidObject = md5(filename);
+                                // get a chord that is responsible for the file
+                                ChordMessageInterface peer = chord.locateSuccessor(guidObject);
+                                peer.delete(guidObject);
+                            }catch(IOException e){
+                                e.printStackTrace();
+                            }
+                        }
+
+                        // Leaves the ring and passes all files to nearest chord
+                        if (tokens[0].equals("leave") && tokens.length == 1){
+                            try {
+                                chord.leaveRing();
+                            } catch (NotBoundException e) {
+                                e.printStackTrace();
+                            }
+                            System.exit(0);
+                        }
                      }
                  }
-                 if (tokens[0].equals("print")) {
-                     chord.Print();
-                 }
-                 if  (tokens[0].equals("write") && tokens.length == 2) {
-                     try {
-                        long guidObject = md5(tokens[1]);
-                         // If you are using windows you have to use
-                         // 				fileName = ".\\"+  port +"\\"+Integer.parseInt(tokens[1]); // path to file
-                         String fileName = "./"+  guid +"/"+tokens[1]; // path to file
-                         InputStream  file = new FileStream(fileName);
-                         ChordMessageInterface peer = chord.locateSuccessor(guidObject);
-                         peer.put(guidObject, file); // put file into ring
-                    } catch (IOException e) {
-                         e.printStackTrace();
-                     }
-                 }
-                 if  (tokens[0].equals("read") && tokens.length == 2) {
-                    long guidObject = md5(tokens[1]);
-                     // If you are using windows you have to use
-                     // 	fileName = ".\\"+  port +"\\"+Integer.parseInt(tokens[1]); // path to file
-                    try
-                    {
-                       String fileName = "./"+  guid +"/"+tokens[1]; // path to file
-                       ChordMessageInterface peer = chord.locateSuccessor(guidObject);
-                       InputStream  inputStream = peer.get(guidObject); // put file into ring
-                       int i=0;
-
-                       FileOutputStream output = new FileOutputStream(fileName);
-                       while (inputStream.available() > 0)
-                         output.write(inputStream.read());
-
-                    }
-                    catch(IOException e)
-                    {
-                       System.out.println(e);
-                    }
-
-
-                }
-                if  (tokens[0].equals("delete") && tokens.length == 2   ) {
-                    try
-                    {
-                       long guidObject = md5(tokens[1]);
-                       ChordMessageInterface peer = chord.locateSuccessor(guidObject);
-                       peer.delete(guidObject);
-                    }
-                    catch(IOException e)
-                    {
+                 catch(RemoteException e)
+                 {
                         System.out.println(e);
-                    }
-                }
-
-                // Leaves the ring and passes all files to nearest chord
-                if (tokens[0].equals("leave") && tokens.length == 1){
-                    try {
-                        chord.leaveRing();
-                    } catch (NotBoundException e) {
-                        e.printStackTrace();
-                    } catch (RemoteException e){
-                        e.printStackTrace();
-                    }
-                    System.exit(0);
-                }
+                 }
              }
-                }
          }, 1000, 1000);
     }
-    
-    static public void main(String args[])
+
+
+
+    /*****************************//**
+    * main program
+    * \param args[] node port
+    **********************************/  
+    public static void main(String args[])
     {
         if (args.length < 1 ) {
             throw new IllegalArgumentException("Parameter: <port>");
