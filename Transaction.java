@@ -4,7 +4,7 @@ import java.util.Date;
 public class Transaction {
     private int transactionID;
     private long collabGUID;
-    private String vote;        // yes or no
+    private boolean vote;        // yes or no
     private String operation;   // write or delete
     private Path dataSrcPath;       // Path of your src file/files that you are transferring if any
     private long timestamp;
@@ -12,7 +12,7 @@ public class Transaction {
     public Transaction(long c, String op){
         collabGUID = c;
         operation = op;
-        vote = "Yes";
+        vote = true;
         timestamp = createTimeStamp();
 
         // creates an id based on the object's hascode
@@ -24,10 +24,7 @@ public class Transaction {
     }
 
     public void setVote(boolean v){
-        if(v)
-            vote = "Yes";
-        else
-            vote = "False";
+        vote = v;
     }
 
     public long createTimeStamp(){
