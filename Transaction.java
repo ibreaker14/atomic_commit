@@ -27,6 +27,10 @@ public class Transaction {
         vote = v;
     }
 
+    public boolean getVote(){
+        return vote;
+    }
+
     public long createTimeStamp(){
         return (long) (new Date().getTime()/1000);
     }
