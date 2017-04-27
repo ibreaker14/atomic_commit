@@ -5,6 +5,8 @@ import java.rmi.*;
 import java.rmi.registry.*;
 import java.rmi.server.*;
 import java.net.*;
+import java.security.Timestamp;
+import java.sql.Time;
 import java.util.*;
 import java.io.*;
 /*****************************//**
@@ -26,6 +28,8 @@ public class Chord extends java.rmi.server.UnicastRemoteObject implements ChordM
     ChordMessageInterface successor;
     ChordMessageInterface predecessor;
     ChordMessageInterface[] finger;
+    HashMap<Long, Timestamp> lastRead;
+    HashMap<Long, Timestamp> lastWrite;
     int nextFinger;
     long guid; // GUID (i)
     Timer timer;
@@ -351,7 +355,6 @@ public class Chord extends java.rmi.server.UnicastRemoteObject implements ChordM
       catch(RemoteException e)
       {
           predecessor = null;
-//           e.printStackTrace();
       }
     }
 
@@ -367,6 +370,9 @@ public class Chord extends java.rmi.server.UnicastRemoteObject implements ChordM
 	       finger[j] = null;
      	}
         this.guid = guid;
+
+        lastRead = new HashMap<>();
+        lastWrite = new HashMap<>();
 
         predecessor = null;
         successor = this;
@@ -389,6 +395,7 @@ public class Chord extends java.rmi.server.UnicastRemoteObject implements ChordM
 	       throw e;
         }
     }
+
 
     /*****************************//**
     * prints relevant info
@@ -413,6 +420,29 @@ public class Chord extends java.rmi.server.UnicastRemoteObject implements ChordM
 	       System.out.println("Cannot retrive id");
         }
     }
+
+    public boolean canCommit(Transaction t){
+        Scanner scan = new Scanner(System.in);
+        System.out.println(t.getID() + " is trying to commit. Allow? (y/n)");
+        String decision = scan.nextLine();
+        if(decision.equals("y")){
+            t.setVote(true);
+            return true;
+        }
+        else
+            t.setVote(false);
+        return false;
+    }
+
+    public void doCommit(Transaction t){
+
+    }
+
+    public void doAbort(Transaction t){
+
+    }
+
+
 
     /*****************************//**
     * copies contents of folder

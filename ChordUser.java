@@ -152,6 +152,17 @@ public class ChordUser
     }
 
 
+    public void atomicWrite(){
+
+    }
+
+    public void atomicRead(){
+
+    }
+
+    public void atomicDelete(){
+
+    }
 
     /*****************************//**
     * main program
