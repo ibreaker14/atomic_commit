@@ -20,6 +20,7 @@ public interface ChordMessageInterface extends Remote {
 
     public boolean canCommit(Transaction t);
     public void doCommit(Transaction t);
+    public void abortCommit(Transaction t);
     public void atomicWrite(long guid, String filename);
     public void atomicRead(long guid, String filename);
     public long createTimeStamp();

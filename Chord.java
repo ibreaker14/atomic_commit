@@ -419,12 +419,14 @@ public class Chord extends java.rmi.server.UnicastRemoteObject implements ChordM
         }
     }
 
+    //TODO
     public boolean canCommit(Transaction t){
         long objectid = t.getID();
         // I think you need to check if the last timestamp you read the file is less than the timestamp of this incoming transaction.
         // if the timestamp is greater, then your vote will be False
     }
 
+    //TODO 
     public void doCommit(Transaction t){
         try {
             // call the put method which will grab the file from the server to your local storage
@@ -436,7 +438,8 @@ public class Chord extends java.rmi.server.UnicastRemoteObject implements ChordM
         }
     }
 
-    public void doAbort(Transaction t){
+    //TODO
+    public void abortCommit(Transaction t){
         // abort stuff?
     }
 
