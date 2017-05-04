@@ -475,9 +475,9 @@ public class Chord extends java.rmi.server.UnicastRemoteObject implements ChordM
                 peer3.doCommit(t3); // put file into ring
             }
             else{
-                peer1.abortCommit(t);
-                peer2.abortCommit(t);
-                peer3.abortCommit(t);
+                peer1.abortCommit(t1);
+                peer2.abortCommit(t2);
+                peer3.abortCommit(t3);
             }
         } catch (IOException e) {
             e.printStackTrace();
