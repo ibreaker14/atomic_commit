@@ -1,5 +1,6 @@
 import java.rmi.*;
 import java.io.*;
+import java.util.Date;
 
 public interface ChordMessageInterface extends Remote {
     public ChordMessageInterface getPredecessor()  throws RemoteException;
@@ -15,4 +16,7 @@ public interface ChordMessageInterface extends Remote {
     public void put(long guidObject, InputStream file) throws IOException, RemoteException;
     public InputStream get(long guidObject) throws IOException, RemoteException;
     public void delete(long guidObject) throws IOException, RemoteException;
+
+    public boolean canCommit(Transaction t);
+    public long createTimeStamp();
 }

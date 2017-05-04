@@ -108,10 +108,8 @@ public class Chord extends java.rmi.server.UnicastRemoteObject implements ChordM
             }catch(Exception e){
                 e.printStackTrace();
             }
-
             return file;
     }
-
 
     /*****************************//**
     * deletes file from repository
@@ -371,7 +369,6 @@ public class Chord extends java.rmi.server.UnicastRemoteObject implements ChordM
      	}
         this.guid = guid;
 
-        lastRead = new HashMap<>();
         lastWrite = new HashMap<>();
 
         predecessor = null;
