@@ -4,9 +4,9 @@ import java.util.Date;
 public class Transaction {
     private int transactionID;
     private long collabGUID;
-    private boolean vote;        // yes or no
+    private boolean vote;       // yes or no
     private String operation;   // write or delete
-    private Path dataSrcPath;       // Path of your src file/files that you are transferring if any
+    private Path dataSrcPath;   // Path of your src file/files that you are transferring if any
     private long timestamp;
 
     public Transaction(long c, String op){
