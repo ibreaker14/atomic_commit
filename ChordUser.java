@@ -196,6 +196,7 @@ public class ChordUser
         }
     }
 
+    //TODO
     public void atomicRead(long guid, String[] tokens, ChordMessageInterface chord){
         try {
             String filename = tokens[1];
@@ -212,6 +213,7 @@ public class ChordUser
         }
     }
 
+    //TODO
     public void atomicDelete(){
 
     }
