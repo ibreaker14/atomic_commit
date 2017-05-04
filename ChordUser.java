@@ -107,7 +107,7 @@ public class ChordUser
                              }
                          }
                          else if  (tokens[0].equals("AtomicWrite") && tokens.length == 2) {
-                             chord.atomicWrite(guid, tokens);
+                             chord.atomicWrite(guid, tokens[1]);
                          }
                          // Downloads a file from a chord to the local filesystem
                          else if  (tokens[0].equals("read") && tokens.length == 2) {
@@ -126,7 +126,7 @@ public class ChordUser
                              }
                         }
                          else if  (tokens[0].equals("AtomicRead") && tokens.length == 2) {
-                             chord.atomicRead(guid, tokens);
+                             chord.atomicRead(guid, tokens[1]);
                          }
                         // Deletes a file stored from a Chord
                         else if  (tokens[0].equals("delete") && tokens.length == 2) {
