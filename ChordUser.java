@@ -86,10 +86,10 @@ public class ChordUser
                                  e.printStackTrace();
                              }
                          }
-                         if (tokens[0].equals("print")) {
+                         else if (tokens[0].equals("print")) {
                              chord.Print();
                          }
-                         if  (tokens[0].equals("write") && tokens.length == 2) {
+                         else if  (tokens[0].equals("write") && tokens.length == 2) {
                              try {
                                  String path;
                                  String fileName = tokens[1];
@@ -106,11 +106,11 @@ public class ChordUser
                                  System.out.println("File not found");
                              }
                          }
-                         if  (tokens[0].equals("AtomicWrite") && tokens.length == 2) {
-                             atomicWrite(guid, tokens, chord);
+                         else if  (tokens[0].equals("AtomicWrite") && tokens.length == 2) {
+                             chord.atomicWrite(guid, tokens);
                          }
                          // Downloads a file from a chord to the local filesystem
-                         if  (tokens[0].equals("read") && tokens.length == 2) {
+                         else if  (tokens[0].equals("read") && tokens.length == 2) {
                              try {
                                  String filename = tokens[1];
                                  Path path = Paths.get("./" + guid + "/" + filename);
@@ -125,8 +125,11 @@ public class ChordUser
                                  e.printStackTrace();
                              }
                         }
+                         else if  (tokens[0].equals("AtomicRead") && tokens.length == 2) {
+                             chord.atomicRead(guid, tokens);
+                         }
                         // Deletes a file stored from a Chord
-                        if  (tokens[0].equals("delete") && tokens.length == 2) {
+                        else if  (tokens[0].equals("delete") && tokens.length == 2) {
                             try {
                                 String filename = tokens[1];
                                 long guidObject = md5(filename);
@@ -155,67 +158,6 @@ public class ChordUser
                  }
              }
          }, 1000, 1000);
-    }
-
-
-    public void atomicWrite(long guid, String[] tokens, ChordMessageInterface chord){
-        try {
-            String path;
-            String fileName = tokens[1];
-
-            // create the 3 guids for the 3 acceptors
-            long guidObject1 = md5(fileName + 1);
-            long guidObject2 = md5(fileName + 2);
-            long guidObject3 = md5(fileName + 3);
-            // If you are using windows you have to use
-            // path = ".\\"+  guid +"\\"+fileName; // path to file
-            path = "./"+  guid +"/"+fileName; // path to file
-            FileStream file = new FileStream(path);
-            ChordMessageInterface peer1 = chord.locateSuccessor(guidObject1);
-            ChordMessageInterface peer2 = chord.locateSuccessor(guidObject2);
-            ChordMessageInterface peer3 = chord.locateSuccessor(guidObject3);
-
-            // create a transaction
-            Transaction t = new Transaction(guid, "Write");
-            // send a canCommit request
-            peer1.canCommit(t, timestamp1);
-            peer2.canCommit(t, timestamp2);
-            peer3.canCommit(t, timestamp3);
-
-            // wait until everyone responds
-
-            // if everyone agrees send doCommit request
-
-            // else abortCommit
-
-            peer.put(guidObject, file); // put file into ring
-        } catch (IOException e) {
-            e.printStackTrace();
-        } catch (Exception e){
-            System.out.println("File not found");
-        }
-    }
-
-    //TODO
-    public void atomicRead(long guid, String[] tokens, ChordMessageInterface chord){
-        try {
-            String filename = tokens[1];
-            Path path = Paths.get("./" + guid + "/" + filename);
-            long guidObject = md5(filename);
-            // get a chord that is responsible for the file
-            ChordMessageInterface peer = chord.locateSuccessor(guidObject);
-            // open a stream to copy content to stream
-            InputStream stream = peer.get(guidObject);
-            // Outputs stream content to a file
-            Files.copy(stream, path);
-        }catch(IOException e){
-            e.printStackTrace();
-        }
-    }
-
-    //TODO
-    public void atomicDelete(){
-
     }
 
     /*****************************//**
