@@ -18,6 +18,6 @@ public interface ChordMessageInterface extends Remote {
     public InputStream get(long guidObject) throws IOException, RemoteException;
     public void delete(long guidObject) throws IOException, RemoteException;
 
-    public boolean canCommit(Transaction t);
+    public boolean canCommit(Transaction t, long timestamp);
     public long createTimeStamp();
 }

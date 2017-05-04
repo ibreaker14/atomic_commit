@@ -26,7 +26,7 @@ public class ChordUser
      int port;
 
     /** Creates an md5 hashed key for the guid **/
-    private long md5(String objectName)
+    public static long md5(String objectName)
     {
         try
         {

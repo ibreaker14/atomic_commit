@@ -418,7 +418,7 @@ public class Chord extends java.rmi.server.UnicastRemoteObject implements ChordM
         }
     }
 
-    public boolean canCommit(Transaction t){
+    public boolean canCommit(Transaction t, long timestamp){
         Scanner scan = new Scanner(System.in);
         System.out.println(t.getID() + " is trying to commit. Allow? (y/n)");
         String decision = scan.nextLine();
@@ -441,38 +441,42 @@ public class Chord extends java.rmi.server.UnicastRemoteObject implements ChordM
 
     }
 
-    //TODO
-    public void atomicWrite(long guid, String[] tokens, ChordMessageInterface chord){
+
+    public void atomicWrite(long guid, String[] tokens){
         try {
             String path;
             String fileName = tokens[1];
 
             // create the 3 guids for the 3 acceptors
-            long guidObject1 = md5(fileName + 1);
-            long guidObject2 = md5(fileName + 2);
-            long guidObject3 = md5(fileName + 3);
+            long guidObject1 = ChordUser.md5(fileName + 1);
+            long guidObject2 = ChordUser.md5(fileName + 2);
+            long guidObject3 = ChordUser.md5(fileName + 3);
             // If you are using windows you have to use
             // path = ".\\"+  guid +"\\"+fileName; // path to file
             path = "./"+  guid +"/"+fileName; // path to file
             FileStream file = new FileStream(path);
-            ChordMessageInterface peer1 = chord.locateSuccessor(guidObject1);
-            ChordMessageInterface peer2 = chord.locateSuccessor(guidObject2);
-            ChordMessageInterface peer3 = chord.locateSuccessor(guidObject3);
+            ChordMessageInterface peer1 = this.locateSuccessor(guidObject1);
+            ChordMessageInterface peer2 = this.locateSuccessor(guidObject2);
+            ChordMessageInterface peer3 = this.locateSuccessor(guidObject3);
 
             // create a transaction
             Transaction t = new Transaction(guid, "Write");
-            // send a canCommit request
-            peer1.canCommit(t, timestamp1);
-            peer2.canCommit(t, timestamp2);
-            peer3.canCommit(t, timestamp3);
+            long timestamp = createTimeStamp();
+            
+            // send a canCommit request to the 3 participants
+            peer1.canCommit(t, timestamp);
+            peer2.canCommit(t, timestamp);
+            peer3.canCommit(t, timestamp);
 
-            // wait until everyone responds
+            // wait until you get everyone's response
 
             // if everyone agrees send doCommit request
 
             // else abortCommit
+            peer1.put(guidObject1, file); // put file into ring
+            peer2.put(guidObject1, file); // put file into ring
+            peer3.put(guidObject1, file); // put file into ring
 
-            peer.put(guidObject, file); // put file into ring
         } catch (IOException e) {
             e.printStackTrace();
         } catch (Exception e){
@@ -484,7 +488,7 @@ public class Chord extends java.rmi.server.UnicastRemoteObject implements ChordM
         try {
             String filename = tokens[1];
             Path path = Paths.get("./" + guid + "/" + filename);
-            long guidObject = md5(filename);
+            long guidObject = ChordUser.md5(filename + 1);
             // get a chord that is responsible for the file
             ChordMessageInterface peer = chord.locateSuccessor(guidObject);
             // open a stream to copy content to stream
