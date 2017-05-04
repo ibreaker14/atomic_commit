@@ -431,14 +431,17 @@ public class Chord extends java.rmi.server.UnicastRemoteObject implements ChordM
         return false;
     }
 
+    //TODO 
     public void doCommit(Transaction t){
 
     }
 
+    //TODO
     public void doAbort(Transaction t){
 
     }
 
+    //TODO
     public void atomicWrite(long guid, String[] tokens, ChordMessageInterface chord){
         try {
             String path;
