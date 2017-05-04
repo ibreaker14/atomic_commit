@@ -1,5 +1,6 @@
 import java.rmi.*;
 import java.io.*;
+import java.security.Timestamp;
 import java.util.Date;
 
 public interface ChordMessageInterface extends Remote {
