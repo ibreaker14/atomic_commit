@@ -371,6 +371,7 @@ public class Chord extends java.rmi.server.UnicastRemoteObject implements ChordM
         this.guid = guid;
 
         lastWrite = new HashMap<>();
+        lastRead = new HashMap<>();
 
         predecessor = null;
         successor = this;
@@ -419,31 +420,46 @@ public class Chord extends java.rmi.server.UnicastRemoteObject implements ChordM
         }
     }
 
-    //TODO
-    public boolean canCommit(Transaction t){
-        long objectid = t.getID();
-        // I think you need to check if the last timestamp you read the file is less than the timestamp of this incoming transaction.
-        // if the timestamp is greater, then your vote will be False
+    public boolean canCommit(Transaction t) throws RemoteException{
+        if(t.getOperation().equals("write")) {
+            long objectid = t.getID();
+            // I think you need to check if the last timestamp you read the file is less than the timestamp of this incoming transaction.
+            // if the timestamp is greater, then your vote will be False
+            long transTimestamp = t.getTimestamp();
+            long lastWriteTimestamp = lastWrite.get(t.getFileGUID());
+
+            if (lastWriteTimestamp > transTimestamp){
+                System.out.println(this.getId() + " votes no for transaction:" + t.getID());
+                return false;
+            }
+            else
+                System.out.println(this.getId() + " votes yes for transaction:" + t.getID());
+                return true;
+        }
+        System.out.println(this.getId() + " votes yes for transaction:" + t.getID());
+        return true;
     }
 
     //TODO 
-    public void doCommit(Transaction t){
+    public void doCommit(Transaction t) throws RemoteException{
         try {
             // call the put method which will grab the file from the server to your local storage
-            this.put(t.getID(), t.getFileStream());
+            this.put(t.getFileGUID(), t.getFileStream());
 
-            // update your lastRead hashmap
+            // update your lastWrite hashmap
+            newWriteTimestamp(t.getFileGUID(), createTimeStamp());
+            newReadTimestamp(t.getFileGUID(), createTimeStamp());
         }catch(RemoteException ex){
             ex.printStackTrace();
         }
     }
 
     //TODO
-    public void abortCommit(Transaction t){
-        // abort stuff?
+    public void abortCommit(Transaction t) throws RemoteException{
+        // abort stuff? for now dont do anything
     }
 
-    public void atomicWrite(long guid, String filename){
+    public void atomicWrite(long guid, String filename) throws RemoteException{
         try {
             // create the 3 guids for the 3 acceptors
             long guidObject1 = ChordUser.md5(filename + 1);
@@ -458,10 +474,24 @@ public class Chord extends java.rmi.server.UnicastRemoteObject implements ChordM
             ChordMessageInterface peer3 = this.locateSuccessor(guidObject3);
 
             long timestamp = createTimeStamp();
+            long ts1, ts2, ts3;
+            if(!lastRead.containsKey(guidObject1))
+                ts1 = timestamp;
+            else
+                ts1 = lastRead.get(guidObject1);
+            if(!lastRead.containsKey(guidObject2))
+                ts2 = timestamp;
+            else
+                ts2 = lastRead.get(guidObject2);
+            if(!lastRead.containsKey(guidObject3))
+                ts3 = timestamp;
+            else
+                ts3 = lastRead.get(guidObject3);
+
             // create a transaction
-            Transaction t1 = new Transaction(guidObject1, "Write", timestamp, path);
-            Transaction t2 = new Transaction(guidObject2, "Write", timestamp, path);
-            Transaction t3 = new Transaction(guidObject3, "Write", timestamp, path);
+            Transaction t1 = new Transaction(guidObject1, "Write", ts1, path);
+            Transaction t2 = new Transaction(guidObject2, "Write", ts2, path);
+            Transaction t3 = new Transaction(guidObject3, "Write", ts3, path);
 
             // send a canCommit request to the 3 participants
             boolean v1 = peer1.canCommit(t1);
@@ -486,7 +516,7 @@ public class Chord extends java.rmi.server.UnicastRemoteObject implements ChordM
         }
     }
 
-    public void atomicRead(long guid, String filename){
+    public void atomicRead(long guid, String filename) throws RemoteException{
         try {
             Path path = Paths.get("./" + guid + "/" + filename);
             // get the guid of the file+i
@@ -502,7 +532,13 @@ public class Chord extends java.rmi.server.UnicastRemoteObject implements ChordM
             // open a stream to copy content to stream
             InputStream stream = peer1.get(guidObject1);
             // Outputs stream content to a file
-            Files.copy(stream, path);
+            String fileName = path.toString();
+            FileOutputStream output = new FileOutputStream(fileName);
+            while (stream.available() > 0)
+                output.write(stream.read());
+            output.close();
+
+            //Files.copy(stream, path);
 
             long timestamp = createTimeStamp();
 
@@ -537,15 +573,15 @@ public class Chord extends java.rmi.server.UnicastRemoteObject implements ChordM
         }
     }
 
-    public long createTimeStamp(){
+    public long createTimeStamp() throws RemoteException{
         return (new Date().getTime()/1000);
     }
 
-    public void newReadTimestamp(long guid, long timestamp){
+    public void newReadTimestamp(long guid, long timestamp) throws RemoteException{
         lastRead.put(guid, timestamp);
     }
 
-    public void newWriteTimestamp(long guid, long timestamp){
+    public void newWriteTimestamp(long guid, long timestamp) throws RemoteException{
         lastWrite.put(guid, timestamp);
     }
 

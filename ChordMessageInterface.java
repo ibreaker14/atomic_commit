@@ -18,12 +18,12 @@ public interface ChordMessageInterface extends Remote {
     public InputStream get(long guidObject) throws IOException, RemoteException;
     public void delete(long guidObject) throws IOException, RemoteException;
 
-    public boolean canCommit(Transaction t);
-    public void doCommit(Transaction t);
-    public void abortCommit(Transaction t);
-    public void atomicWrite(long guid, String filename);
-    public void atomicRead(long guid, String filename);
-    public long createTimeStamp();
-    public void newReadTimestamp(long guid, long timestamp);
-    public void newWriteTimestamp(long guid, long timestamp);
+    public boolean canCommit(Transaction t) throws RemoteException;
+    public void doCommit(Transaction t) throws RemoteException;
+    public void abortCommit(Transaction t) throws RemoteException;
+    public void atomicWrite(long guid, String filename) throws RemoteException;
+    public void atomicRead(long guid, String filename) throws RemoteException;
+    public long createTimeStamp() throws RemoteException;
+    public void newReadTimestamp(long guid, long timestamp) throws RemoteException;
+    public void newWriteTimestamp(long guid, long timestamp) throws RemoteException;
 }
