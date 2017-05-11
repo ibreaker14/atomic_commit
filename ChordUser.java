@@ -7,7 +7,7 @@ import java.security.*;
 import java.nio.file.*;
 
 /*****************************//**
-* \brief This is the User Interface for Chord P2P files
+* \brief This is the User Interface for Atomic Commit
 * It allows users to start Nodes and connect to othere 
 * \author Mingtau Li, 011110539
 * \author Kevin Duong, 011715000

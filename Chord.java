@@ -10,8 +10,8 @@ import java.sql.Time;
 import java.util.*;
 import java.io.*;
 /*****************************//**
-* \brief This program uses a Chord P2P Algorithm to transfer store and retrieve files
-* It creates a ring of nodes that copies files from one node to another
+* \brief This program is the Chord P2P server for atomic commit
+* It creates a ring of nodes that copies files to multiple nodes
 * \author Mingtau Li, 011110539
 * \author Kevin Duong, 011715000
 * \author Mark Spencer Tan, 012192282
@@ -420,6 +420,10 @@ public class Chord extends java.rmi.server.UnicastRemoteObject implements ChordM
         }
     }
 
+    /*****************************//**
+    * verifies that files can commit
+    * /param transaction transaction object for commit
+    **********************************/  
     public boolean canCommit(Transaction t) throws RemoteException{
         if(t.getOperation().equals("Write")) {
             long transTimestamp = t.getTimestamp();
@@ -443,7 +447,10 @@ public class Chord extends java.rmi.server.UnicastRemoteObject implements ChordM
         return true;
     }
 
-    //TODO 
+    /*****************************//**
+    * commits files
+    * /param transaction transaction object for commit
+    **********************************/  
     public void doCommit(Transaction t) throws RemoteException{
         try {
             // call the put method which will grab the file from the server to your local storage
@@ -457,11 +464,19 @@ public class Chord extends java.rmi.server.UnicastRemoteObject implements ChordM
         }
     }
 
-    //TODO
+    /*****************************//**
+    * aborts current transaction 
+    * /param transaction transaction object for commit
+    **********************************/  
     public void abortCommit(Transaction t) throws RemoteException{
         // abort stuff? for now dont do anything
     }
 
+    /*****************************//**
+    * atomic writes file in repository
+    * /param guid id of file
+    * /param filename name of file
+    **********************************/  
     public void atomicWrite(long guid, String filename) throws RemoteException{
         try {
             // create the 3 guids for the 3 acceptors
@@ -520,6 +535,11 @@ public class Chord extends java.rmi.server.UnicastRemoteObject implements ChordM
         }
     }
 
+    /*****************************//**
+    * atomic reads file in repository
+    * /param guid id of file
+    * /param filename name of file
+    **********************************/  
     public void atomicRead(long guid, String filename) throws RemoteException{
         try {
             Path path = Paths.get("./" + guid + "/" + filename);
@@ -577,14 +597,27 @@ public class Chord extends java.rmi.server.UnicastRemoteObject implements ChordM
         }
     }
 
+    /*****************************//**
+    * helper function for creating timestamps
+    **********************************/  
     public long createTimeStamp() throws RemoteException{
         return (new Date().getTime()/1000);
     }
 
+    /*****************************//**
+    * read new timestamp
+    * /param guid id of file
+    * /param timestamp timestamp
+    **********************************/  
     public void newReadTimestamp(long guid, long timestamp) throws RemoteException{
         lastRead.put(guid, timestamp);
     }
 
+    /*****************************//**
+    * write a new timstamp
+    * /param guid id of file
+    * /param timestamp timestamp
+    **********************************/  
     public void newWriteTimestamp(long guid, long timestamp) throws RemoteException{
         lastWrite.put(guid, timestamp);
     }
